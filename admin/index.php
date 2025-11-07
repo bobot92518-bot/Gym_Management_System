@@ -1,7 +1,7 @@
 <?php
 // index.php - Landing/Dashboard Page
-require_once 'config.php';
-require_once 'session.php';
+require_once '../config.php';
+require_once '../session.php';
 requireLogin();
 
 $db = new Database();
@@ -178,40 +178,38 @@ $expiring_subs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="sidebar">
         <div class="logo">
             <i class="fas fa-dumbbell"></i>
-            <h4 class="mt-2">GYM Manager</h4>
+            <h4 class="mt-2">FITNESS HUB</h4>
         </div>
         <nav class="nav flex-column mt-4">
             <a class="nav-link active" href="index.php">
                 <i class="fas fa-home me-2"></i> Dashboard
             </a>
-            <a class="nav-link" href="members.php">
+            <a class="nav-link" href="membership.php">
                 <i class="fas fa-users me-2"></i> Members
             </a>
             <a class="nav-link" href="attendance.php">
                 <i class="fas fa-clipboard-check me-2"></i> Attendance
             </a>
-            <a class="nav-link" href="subscriptions.php">
+            <a class="nav-link" href="../subscriptions.php">
                 <i class="fas fa-id-card me-2"></i> Subscriptions
             </a>
-            <a class="nav-link" href="payments.php">
+            <a class="nav-link" href="../payments.php">
                 <i class="fas fa-dollar-sign me-2"></i> Payments
             </a>
-            <a class="nav-link" href="plans.php">
+            <a class="nav-link" href="../plans.php">
                 <i class="fas fa-list me-2"></i> Membership Plans
             </a>
-            <a class="nav-link" href="reports.php">
+            <a class="nav-link" href="../reports.php">
                 <i class="fas fa-chart-bar me-2"></i> Reports
             </a>
-            <a class="nav-link" href="member_dashboard.php">
-                <i class="fas fa-user-circle me-2"></i> Member Dashboard
-            </a>
+
             <?php if (isAdmin()): ?>
             <a class="nav-link" href="admin_reset.php">
                 <i class="fas fa-key me-2"></i> Password Reset
             </a>
             <?php endif; ?>
             <hr style="border-color: rgba(255,255,255,0.2);">
-            <a class="nav-link" href="logout.php">
+            <a class="nav-link" href="../logout.php">
                 <i class="fas fa-sign-out-alt me-2"></i> Logout
             </a>
         </nav>

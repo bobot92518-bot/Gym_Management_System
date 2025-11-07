@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['full_name'] = $user['full_name'];
             $_SESSION['role'] = $user['role'];
 
-            header('Location: index.php');
+            header('Location: admin/index.php');
             exit();
         } else {
             $login_error = 'Invalid username or password';

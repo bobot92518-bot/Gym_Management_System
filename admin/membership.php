@@ -1,7 +1,7 @@
 <?php
 // members.php - Member Management
-require_once 'config.php';
-require_once 'session.php';
+require_once '../config.php';
+require_once '../session.php';
 requireLogin();
 
 $db = new Database();
@@ -184,7 +184,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <a class="nav-link" href="index.php">
                 <i class="fas fa-home me-2"></i> Dashboard
             </a>
-            <a class="nav-link active" href="members.php">
+            <a class="nav-link active" href="membership.php">
                 <i class="fas fa-users me-2"></i> Members
             </a>
             <a class="nav-link" href="attendance.php">
@@ -202,16 +202,14 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <a class="nav-link" href="reports.php">
                 <i class="fas fa-chart-bar me-2"></i> Reports
             </a>
-            <a class="nav-link" href="member_dashboard.php">
-                <i class="fas fa-user-circle me-2"></i> Member Dashboard
-            </a>
+
             <?php if (isAdmin()): ?>
             <a class="nav-link" href="admin_reset.php">
                 <i class="fas fa-key me-2"></i> Password Reset
             </a>
             <?php endif; ?>
             <hr style="border-color: rgba(255,255,255,0.2);">
-            <a class="nav-link" href="logout.php">
+            <a class="nav-link" href="../logout.php">
                 <i class="fas fa-sign-out-alt me-2"></i> Logout
             </a>
         </nav>
@@ -254,7 +252,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </button>
                     </div>
                     <div class="col-md-2">
-                        <a href="members.php" class="btn btn-outline-secondary w-100">
+                        <a href="membership.php" class="btn btn-outline-secondary w-100">
                             <i class="fas fa-redo me-2"></i>Reset
                         </a>
                     </div>
