@@ -74,6 +74,7 @@ if ($is_logged_in) {
     $avg_duration = $stmt->fetch(PDO::FETCH_ASSOC)['avg_duration'];
     $avg_duration_formatted = $avg_duration ? gmdate("H:i", $avg_duration) : '00:00';
 }
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
