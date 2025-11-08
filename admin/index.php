@@ -178,7 +178,7 @@ $expiring_subs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <div class="sidebar">
         <div class="logo">
             <i class="fas fa-dumbbell"></i>
-            <h4 class="mt-2">FITNESS HUB</h4>
+            <h4 class="mt-2">GYM Manager</h4>
         </div>
         <nav class="nav flex-column mt-4">
             <a class="nav-link active" href="index.php">
@@ -190,16 +190,16 @@ $expiring_subs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <a class="nav-link" href="attendance.php">
                 <i class="fas fa-clipboard-check me-2"></i> Attendance
             </a>
-            <a class="nav-link" href="../subscriptions.php">
+            <a class="nav-link" href="subscriptions.php">
                 <i class="fas fa-id-card me-2"></i> Subscriptions
             </a>
-            <a class="nav-link" href="../payments.php">
+            <a class="nav-link" href="payments.php">
                 <i class="fas fa-dollar-sign me-2"></i> Payments
             </a>
-            <a class="nav-link" href="../plans.php">
+            <a class="nav-link" href="plans.php">
                 <i class="fas fa-list me-2"></i> Membership Plans
             </a>
-            <a class="nav-link" href="../reports.php">
+            <a class="nav-link" href="reports.php">
                 <i class="fas fa-chart-bar me-2"></i> Reports
             </a>
 

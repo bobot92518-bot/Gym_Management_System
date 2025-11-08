@@ -438,4 +438,119 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
     </script>
 </body>
+<!-- Include QR Code Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<!-- Member ID Card Modal -->
+<div class="modal fade" id="memberIdCardModal" tabindex="-1" aria-labelledby="memberIdCardModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0 shadow-lg">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="memberIdCardModalLabel">
+          <i class="fas fa-id-card me-2"></i>Member ID Card
+        </h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body text-center">
+        <!-- ID Card Design -->
+        <div id="memberIdCard" class="p-4 bg-light rounded position-relative" 
+             style="max-width: 350px; margin: 0 auto; border: 3px solid #0d6efd; background: white;">
+          <!-- Header -->
+          <div class="bg-primary text-white rounded-top py-2 mb-3">
+            <h5 class="fw-bold m-0">GYM MEMBERSHIP CARD</h5>
+          </div>
+
+          <!-- Avatar Circle -->
+          <div class="d-flex justify-content-center mb-3">
+            <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white fw-bold"
+                 style="width:80px; height:80px; font-size:28px;" id="idAvatar">
+              JD
+            </div>
+          </div>
+
+          <!-- Member Info -->
+          <h4 id="idMemberName" class="fw-bold text-uppercase mb-1"></h4>
+          <p class="text-muted mb-1">Member ID: <strong id="idMemberId"></strong></p>
+
+          <!-- QR Code -->
+          <div id="qrcode" class="my-3 d-flex justify-content-center"></div>
+
+          <p class="text-muted small mb-0">Scan this QR code for quick check-in</p>
+
+          <!-- Footer -->
+          <div class="bg-primary text-white mt-3 rounded-bottom py-2">
+            <small>Stay Fit • Stay Healthy</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+          <i class="fas fa-times me-1"></i>Close
+        </button>
+        <button type="button" class="btn btn-primary" id="printIdBtn">
+          <i class="fas fa-print me-1"></i>Print ID
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function viewMember(memberId) {
+    fetch(`get_member.php?id=${memberId}`)
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+
+        // Fill info
+        document.getElementById('idMemberName').textContent = data.first_name + ' ' + data.last_name;
+        document.getElementById('idMemberId').textContent = data.member_id;
+
+        // Initials for avatar
+        const initials = (data.first_name[0] + data.last_name[0]).toUpperCase();
+        document.getElementById('idAvatar').textContent = initials;
+
+        // Generate QR code
+        const qrDiv = document.getElementById('qrcode');
+        qrDiv.innerHTML = '';
+        new QRCode(qrDiv, {
+          text: data.member_id,
+          width: 120,
+          height: 120
+        });
+
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('memberIdCardModal'));
+        modal.show();
+      })
+      .catch(err => {
+        console.error('Fetch error:', err);
+        alert('Unable to fetch member details.');
+      });
+  }
+
+  // Print the ID Card
+  document.getElementById('printIdBtn').addEventListener('click', () => {
+    const card = document.getElementById('memberIdCard').outerHTML;
+    const printWindow = window.open('', '', 'width=400,height=600');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Print ID Card</title>
+          <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        </head>
+        <body class="text-center" style="padding:20px;">${card}</body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
+  });
+</script>
+
 </html>

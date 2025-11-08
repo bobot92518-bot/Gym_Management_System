@@ -347,29 +347,129 @@ $avg_duration = $avg_duration ? gmdate("H:i", $avg_duration) : '00:00';
         <div class="row">
             <!-- Check-in Form -->
             <div class="col-md-4 mb-4">
-                <div class="checkin-card">
-                    <h4 class="text-center mb-4">
-                        <i class="fas fa-qrcode fa-2x mb-3"></i><br>
-                        Quick Check-In
-                    </h4>
-                    <form method="POST" id="checkinForm">
-                        <input type="hidden" name="action" value="checkin">
-                        <input type="text" 
-                               class="form-control checkin-input mb-3" 
-                               name="member_id" 
-                               id="memberIdInput"
-                               placeholder="SCAN OR ENTER ID" 
-                               autocomplete="off"
-                               autofocus
-                               required>
-                        <button type="submit" class="btn btn-checkin w-100">
-                            <i class="fas fa-sign-in-alt me-2"></i>CHECK IN
-                        </button>
-                    </form>
-                    <div class="text-center mt-4">
-                        <small>Scan member ID or enter manually</small>
-                    </div>
-                </div>
+                <!-- Include QR Scanner Library -->
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<div class="checkin-card">
+    <h4 class="text-center mb-4">
+        <i class="fas fa-qrcode fa-2x mb-3"></i><br>
+        Quick Check-In
+    </h4>
+
+    <!-- Mode Toggle Buttons -->
+    <div class="d-flex justify-content-center mb-3">
+        <button type="button" class="btn btn-outline-primary me-2" id="manualModeBtn" style="background-color: white;">
+            <i class="fas fa-keyboard me-2"></i>Manual Input
+        </button>
+        <button type="button" class="btn btn-outline-success" id="scanModeBtn" style="background-color: white;">
+            <i class="fas fa-qrcode me-2"></i>Scan QR
+        </button>
+    </div>
+
+    <!-- Check-In Form -->
+    <form method="POST" id="checkinForm">
+        <input type="hidden" name="action" value="checkin">
+
+        <!-- Manual Input -->
+        <div id="manualInputDiv">
+            <input type="text" 
+                class="form-control checkin-input mb-3" 
+                name="member_id" 
+                id="memberIdInput"
+                placeholder="ENTER MEMBER ID" 
+                autocomplete="off"
+                autofocus
+                required>
+            <button type="submit" class="btn btn-checkin w-100">
+                <i class="fas fa-sign-in-alt me-2"></i>CHECK IN
+            </button>
+        </div>
+
+        <!-- QR Scan Mode -->
+        <div id="qrScannerDiv" style="display:none;">
+            <div id="qr-reader" 
+                style="width:100%; height:250px; border:2px dashed #ccc; border-radius:10px;" 
+                class="mb-3 d-flex align-items-center justify-content-center">
+                <span class="text-muted"><i class="fas fa-camera me-2"></i>QR Scanner Active...</span>
+            </div>
+
+            <button type="button" class="btn btn-secondary w-100 mb-2" id="backToManualBtn">
+                <i class="fas fa-arrow-left me-2"></i>Back to Manual Input
+            </button>
+        </div>
+    </form>
+
+    <div class="text-center mt-4">
+        <small>Scan member QR code or enter manually</small>
+    </div>
+</div>
+
+<script>
+    const manualBtn = document.getElementById('manualModeBtn');
+    const scanBtn = document.getElementById('scanModeBtn');
+    const manualDiv = document.getElementById('manualInputDiv');
+    const qrDiv = document.getElementById('qrScannerDiv');
+    const backBtn = document.getElementById('backToManualBtn');
+    const memberInput = document.getElementById('memberIdInput');
+    let html5QrCode;
+
+    manualBtn.addEventListener('click', () => {
+        stopScanner();
+        manualDiv.style.display = 'block';
+        qrDiv.style.display = 'none';
+        memberInput.focus();
+    });
+
+    scanBtn.addEventListener('click', () => {
+        manualDiv.style.display = 'none';
+        qrDiv.style.display = 'block';
+        startScanner();
+    });
+
+    backBtn.addEventListener('click', () => {
+        stopScanner();
+        manualDiv.style.display = 'block';
+        qrDiv.style.display = 'none';
+    });
+
+    // Start QR scanner
+    function startScanner() {
+        if (!html5QrCode) {
+            html5QrCode = new Html5Qrcode("qr-reader");
+        }
+        Html5Qrcode.getCameras().then(cameras => {
+            if (cameras && cameras.length) {
+                let cameraId = cameras[0].id;
+                html5QrCode.start(
+                    cameraId,
+                    { fps: 10, qrbox: 250 },
+                    qrCodeMessage => {
+                        // When QR code is detected, fill input and submit
+                        memberInput.value = qrCodeMessage;
+                        stopScanner();
+                        document.getElementById('checkinForm').submit();
+                    },
+                    errorMessage => {
+                        // Optional: log scan errors
+                        console.warn(errorMessage);
+                    }
+                ).catch(err => {
+                    console.error("QR start failed:", err);
+                });
+            }
+        }).catch(err => console.error("Camera error:", err));
+    }
+
+    // Stop QR scanner
+    function stopScanner() {
+        if (html5QrCode) {
+            html5QrCode.stop().then(() => {
+                html5QrCode.clear();
+            }).catch(err => console.warn("Stop failed:", err));
+        }
+    }
+</script>
+
 
                 <div class="card mt-3">
                     <div class="card-header">
