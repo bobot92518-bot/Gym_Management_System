@@ -50,8 +50,8 @@ CREATE TABLE IF NOT EXISTS subscriptions (
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     amount_paid DECIMAL(10,2) NOT NULL,
-    payment_method ENUM('Cash', 'Card', 'Online', 'Bank Transfer') DEFAULT 'Cash',
-    status ENUM('Active', 'Expired', 'Cancelled') DEFAULT 'Active',
+    payment_method ENUM('Cash', 'Card', 'Online', 'Bank Transfer', 'Pending') DEFAULT 'Cash',
+    status ENUM('Active', 'Expired', 'Cancelled', 'Pending') DEFAULT 'Active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
     FOREIGN KEY (plan_id) REFERENCES membership_plans(id)

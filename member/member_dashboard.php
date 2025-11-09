@@ -1,7 +1,7 @@
 <?php
 // member_dashboard.php - Member Dashboard
-require_once 'config.php';
-require_once 'session.php';
+require_once '../config.php';
+require_once '../session.php';
 
 // For members, they access via check-in or direct link, but for now assume session
 // Note: This assumes members are logged in via some mechanism, perhaps after check-in
@@ -225,7 +225,7 @@ $attendance = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?php echo date('M d, Y', strtotime($payment['payment_date'])); ?></td>
                                 <td>₱<?php echo $payment['amount']; ?></td>
                                 <td><?php echo $payment['payment_method']; ?></td>
-                                <td><span class="badge bg-success"><?php echo $payment['status']; ?></span></td>
+                                <td><span class="badge bg-success"><?php echo isset($payment['status']) ? $payment['status'] : 'Completed'; ?></span></td>
                             </tr>
                             <?php endforeach; ?>
                             <?php if (empty($payments)): ?>

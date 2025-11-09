@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
                 
             case 'update':
-                $stmt = $conn->prepare("UPDATE members SET first_name=?, last_name=?, email=?, phone=?, address=?, date_of_birth=?, gender=?, emergency_contact=?, emergency_phone=?, status=? WHERE id=?");
+                $stmt = $conn->prepare("UPDATE members SET first_name=?, last_name=?, email=?, phone=?, address=?, date_of_birth=?, gender=?, emergency_contact=?, emergency_phone=? WHERE id=?");
                 $stmt->execute([
                     $_POST['first_name'],
                     $_POST['last_name'],
@@ -41,7 +41,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_POST['gender'],
                     $_POST['emergency_contact'],
                     $_POST['emergency_phone'],
-                    $_POST['status'],
                     $_POST['member_id']
                 ]);
                 $success = "Member updated successfully!";
@@ -52,9 +51,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmt->execute([$_POST['member_id']]);
                 $success = "Member deleted successfully!";
                 break;
+
+            case 'update_status':
+                $stmt = $conn->prepare("UPDATE members SET status = ? WHERE id = ?");
+                $stmt->execute([$_POST['status'], $_POST['member_id']]);
+                $success = "Member status updated to " . $_POST['status'] . " successfully!";
+                break;
+
+            case 'subscribe':
+                // Get plan details
+                $planStmt = $conn->prepare("SELECT * FROM membership_plans WHERE id = ?");
+                $planStmt->execute([$_POST['plan_id']]);
+                $plan = $planStmt->fetch(PDO::FETCH_ASSOC);
+
+                if (!$plan) {
+                    $error = "Invalid plan selected!";
+                    break;
+                }
+
+                // Calculate end date
+                $start_date = $_POST['start_date'];
+                $end_date = date('Y-m-d', strtotime($start_date . ' + ' . $plan['duration_days'] . ' days'));
+
+                // Insert subscription with pending payment
+                $subStmt = $conn->prepare("INSERT INTO subscriptions (member_id, plan_id, start_date, end_date, amount_paid, payment_method, status, created_at) VALUES (?, ?, ?, ?, ?, 'Pending', 'Pending', NOW())");
+                $subStmt->execute([$_POST['member_id'], $_POST['plan_id'], $start_date, $end_date, $plan['price']]);
+
+                $success = "Subscription created with pending payment!";
+                break;
         }
     }
 }
+
+// Fetch active plans for subscription modal
+$plansStmt = $conn->query("SELECT id, plan_name, price, duration_days FROM membership_plans WHERE status = 'Active'");
+$plans = $plansStmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Search functionality
 $search = isset($_GET['search']) ? $_GET['search'] : '';
@@ -333,13 +364,19 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <span class="badge <?php echo $status_class; ?>"><?php echo $member['status']; ?></span>
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-primary" onclick="viewMember(<?php echo $member['id']; ?>)">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewMember(<?php echo $member['id']; ?>)" data-bs-toggle="tooltip" title="View Member Details">
                                         <i class="fas fa-eye"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-warning" onclick="editMember(<?php echo $member['id']; ?>)">
+                                    <button class="btn btn-sm btn-outline-warning" onclick="editMember(<?php echo $member['id']; ?>)" data-bs-toggle="tooltip" title="Edit Member Information">
                                         <i class="fas fa-edit"></i>
                                     </button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteMember(<?php echo $member['id']; ?>)">
+                                    <button class="btn btn-sm btn-outline-info" onclick="updateStatus(<?php echo $member['id']; ?>)" data-bs-toggle="tooltip" title="Update Member Status">
+                                        <i class="fas fa-toggle-on"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="managePlans(<?php echo $member['id']; ?>)" data-bs-toggle="tooltip" title="Manage Member Subscription">
+                                        <i class="fas fa-id-card"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteMember(<?php echo $member['id']; ?>)" data-bs-toggle="tooltip" title="Delete Member">
                                         <i class="fas fa-trash"></i>
                                     </button>
                                 </td>
@@ -353,6 +390,38 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Status Modal -->
+    <div class="modal fade" id="updateStatusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-toggle-on me-2"></i>Update Member Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="action" value="update_status">
+                    <input type="hidden" name="member_id" id="status_member_id">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Select Status</label>
+                            <select class="form-select" name="status" id="status_select" required>
+                                <option value="Active">Active</option>
+                                <option value="Inactive">Inactive</option>
+                                <option value="Suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Status
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -422,6 +491,113 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         </div>
     </div>
 
+    <!-- Edit Member Modal -->
+    <div class="modal fade" id="editMemberModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Edit Member</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="action" value="update">
+                    <input type="hidden" name="member_id" id="edit_member_id">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">First Name *</label>
+                                <input type="text" class="form-control" name="first_name" id="edit_first_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Last Name *</label>
+                                <input type="text" class="form-control" name="last_name" id="edit_last_name" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" id="edit_email">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Phone *</label>
+                                <input type="text" class="form-control" name="phone" id="edit_phone" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Date of Birth</label>
+                                <input type="date" class="form-control" name="dob" id="edit_dob">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Gender</label>
+                                <select class="form-select" name="gender" id="edit_gender">
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Address</label>
+                                <textarea class="form-control" name="address" id="edit_address" rows="2"></textarea>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Emergency Contact Name</label>
+                                <input type="text" class="form-control" name="emergency_contact" id="edit_emergency_contact">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Emergency Contact Phone</label>
+                                <input type="text" class="form-control" name="emergency_phone" id="edit_emergency_phone">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Update Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Modal -->
+    <div class="modal fade" id="subscriptionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Manage Subscription</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form method="POST">
+                    <input type="hidden" name="action" value="subscribe">
+                    <input type="hidden" name="member_id" id="subscription_member_id">
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Select Plan *</label>
+                                <select class="form-select" name="plan_id" required>
+                                    <option value="">Choose a plan</option>
+                                    <?php foreach ($plans as $plan): ?>
+                                        <option value="<?php echo $plan['id']; ?>" data-duration="<?php echo $plan['duration_days']; ?>">
+                                            <?php echo $plan['plan_name']; ?> (<?php echo $plan['duration_days']; ?> days)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Start Date *</label>
+                                <input type="date" class="form-control" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save me-2"></i>Create Subscription
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function deleteMember(id) {
@@ -435,6 +611,58 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 document.body.appendChild(form);
                 form.submit();
             }
+        }
+
+        function editMember(id) {
+            fetch(`get_member.php?id=${id}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+
+                    // Populate the edit modal with member data
+                    document.getElementById('edit_first_name').value = data.first_name;
+                    document.getElementById('edit_last_name').value = data.last_name;
+                    document.getElementById('edit_email').value = data.email;
+                    document.getElementById('edit_phone').value = data.phone;
+                    document.getElementById('edit_address').value = data.address;
+                    document.getElementById('edit_dob').value = data.date_of_birth;
+                    document.getElementById('edit_gender').value = data.gender;
+                    document.getElementById('edit_emergency_contact').value = data.emergency_contact;
+                    document.getElementById('edit_emergency_phone').value = data.emergency_phone;
+                    document.getElementById('edit_member_id').value = data.id;
+
+                    // Show the edit modal
+                    const modal = new bootstrap.Modal(document.getElementById('editMemberModal'));
+                    modal.show();
+                })
+                .catch(err => {
+                    console.error('Fetch error:', err);
+                    alert('Unable to fetch member details.');
+                });
+        }
+
+        function updateStatus(id) {
+            document.getElementById('status_member_id').value = id;
+            const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
+            modal.show();
+        }
+
+        function managePlans(id) {
+            // Show subscription modal instead of redirecting
+            document.getElementById('subscription_member_id').value = id;
+            const modal = new bootstrap.Modal(document.getElementById('subscriptionModal'));
+            modal.show();
+        }
+
+        function updateAmount() {
+            const planSelect = document.getElementById('plan_select');
+            const amountInput = document.getElementById('amount');
+            const selectedOption = planSelect.options[planSelect.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            amountInput.value = price || '';
         }
     </script>
 </body>

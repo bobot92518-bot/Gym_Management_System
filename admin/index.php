@@ -82,6 +82,27 @@ $expiring_subs = $stmt->fetchAll(PDO::FETCH_ASSOC);
             padding-top: 20px;
             color: white;
             z-index: 1000;
+            transform: translateX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
         }
         
         .sidebar .logo {
@@ -112,6 +133,34 @@ $expiring_subs = $stmt->fetchAll(PDO::FETCH_ASSOC);
         .main-content {
             margin-left: 250px;
             padding: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .sidebar.show {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 15px;
+            }
+
+            .stat-card {
+                padding: 15px;
+                margin-bottom: 15px;
+            }
+
+            .stat-card h2 {
+                font-size: 1.5rem;
+            }
+
+            .stat-card h6 {
+                font-size: 0.8rem;
+            }
         }
         
         .stat-card {
@@ -174,8 +223,11 @@ $expiring_subs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </style>
 </head>
 <body>
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <!-- Sidebar -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="logo">
             <i class="fas fa-dumbbell"></i>
             <h4 class="mt-2">GYM Manager</h4>
@@ -217,6 +269,11 @@ $expiring_subs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <!-- Main Content -->
     <div class="main-content">
+        <!-- Mobile Menu Button -->
+        <button class="btn btn-primary d-md-none mb-3" id="sidebarToggle">
+            <i class="fas fa-bars me-2"></i>Menu
+        </button>
+
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2>Dashboard</h2>
             <div>
@@ -351,5 +408,37 @@ $expiring_subs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sidebar toggle functionality
+        document.getElementById('sidebarToggle').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        });
+
+        // Close sidebar when clicking overlay
+        document.getElementById('sidebarOverlay').addEventListener('click', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+        });
+
+        // Close sidebar when clicking a nav link on mobile
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function() {
+                if (window.innerWidth <= 768) {
+                    const sidebar = document.getElementById('sidebar');
+                    const overlay = document.getElementById('sidebarOverlay');
+
+                    sidebar.classList.remove('show');
+                    overlay.classList.remove('show');
+                }
+            });
+        });
+    </script>
 </body>
 </html>

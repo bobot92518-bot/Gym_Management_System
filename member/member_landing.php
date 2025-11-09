@@ -18,36 +18,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['checkin'])) {
     $member = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($member) {
-        // Check if already checked in today
-        $stmt = $conn->prepare("SELECT * FROM attendance WHERE member_id = ? AND date = CURDATE() AND check_out_time IS NULL");
+        // Check if subscription is active
+        $stmt = $conn->prepare("SELECT * FROM subscriptions WHERE member_id = ? AND status = 'Active' AND end_date >= CURDATE()");
         $stmt->execute([$member['id']]);
-        $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+        $subscription = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($existing) {
-            $error = "You are already checked in!";
+        if (!$subscription) {
+            $error = "No active subscription found!";
         } else {
-            // Check if subscription is active
-            $stmt = $conn->prepare("SELECT * FROM subscriptions WHERE member_id = ? AND status = 'Active' AND end_date >= CURDATE()");
-            $stmt->execute([$member['id']]);
-            $subscription = $stmt->fetch(PDO::FETCH_ASSOC);
+            // Set session for member
+            session_start();
+            $_SESSION['member_id'] = $member['id'];
+            $_SESSION['member_name'] = $member['first_name'] . ' ' . $member['last_name'];
 
-            if (!$subscription) {
-                $error = "No active subscription found!";
-            } else {
-                // Proceed with check-in
-                $stmt = $conn->prepare("INSERT INTO attendance (member_id, check_in_time, date) VALUES (?, NOW(), CURDATE())");
-                $stmt->execute([$member['id']]);
+            $success = "Check-in successful! Welcome, " . $member['first_name'] . " " . $member['last_name'];
 
-                // Set session for member
-                session_start();
-                $_SESSION['member_id'] = $member['id'];
-                $_SESSION['member_name'] = $member['first_name'] . ' ' . $member['last_name'];
-
-                $success = "Check-in successful! Welcome, " . $member['first_name'] . " " . $member['last_name'];
-
-                // Redirect to dashboard after 2 seconds
-                header("refresh:2;url=member_dashboard.php");
-            }
+            // Redirect to dashboard after 2 seconds
+            header("refresh:2;url=member_dashboard.php");
         }
     } else {
         $error = "Member not found or inactive!";
