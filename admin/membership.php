@@ -59,6 +59,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'subscribe':
+                // Check if member already has an active subscription
+                $checkStmt = $conn->prepare("SELECT * FROM subscriptions WHERE member_id = ? AND status = 'Active' AND end_date >= CURDATE()");
+                $checkStmt->execute([$_POST['member_id']]);
+                $existing = $checkStmt->fetch(PDO::FETCH_ASSOC);
+
+                if ($existing) {
+                    $error = "Member already has an active subscription until " . date('M d, Y', strtotime($existing['end_date'])) . ". Please renew or cancel the existing subscription.";
+                    break;
+                }
+
                 // Get plan details
                 $planStmt = $conn->prepare("SELECT * FROM membership_plans WHERE id = ?");
                 $planStmt->execute([$_POST['plan_id']]);
@@ -258,6 +268,13 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
         <?php if (isset($success)): ?>
         <div class="alert alert-success alert-dismissible fade show">
             <i class="fas fa-check-circle me-2"></i><?php echo $success; ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        <?php endif; ?>
+
+        <?php if (isset($error)): ?>
+        <div class="alert alert-danger alert-dismissible fade show">
+            <i class="fas fa-exclamation-triangle me-2"></i><?php echo $error; ?>
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
         <?php endif; ?>
