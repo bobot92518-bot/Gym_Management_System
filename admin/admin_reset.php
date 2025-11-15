@@ -3,7 +3,6 @@
 require_once '../config.php';
 require_once '../session.php';
 requireLogin();
-requireAdmin();
 
 $db = new Database();
 $conn = $db->connect();
