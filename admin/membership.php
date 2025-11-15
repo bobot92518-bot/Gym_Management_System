@@ -83,11 +83,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $start_date = $_POST['start_date'];
                 $end_date = date('Y-m-d', strtotime($start_date . ' + ' . $plan['duration_days'] . ' days'));
 
-                // Insert subscription with pending payment
-                $subStmt = $conn->prepare("INSERT INTO subscriptions (member_id, plan_id, start_date, end_date, amount_paid, payment_method, status, created_at) VALUES (?, ?, ?, ?, ?, 'Pending', 'Pending', NOW())");
-                $subStmt->execute([$_POST['member_id'], $_POST['plan_id'], $start_date, $end_date, $plan['price']]);
+                // Insert subscription with Pending status (no payment recorded yet)
+                // amount_paid set to 0.00; actual payment is recorded in `payments` table via payments.php
+                $subStmt = $conn->prepare("INSERT INTO subscriptions (member_id, plan_id, start_date, end_date, amount_paid, status, created_at) VALUES (?, ?, ?, ?, ?, 'Pending', NOW())");
+                $subStmt->execute([$_POST['member_id'], $_POST['plan_id'], $start_date, $end_date, 0.00]);
 
-                $success = "Subscription created with pending payment!";
+                $success = "✓ Subscription created! Redirecting to payment...";
+                // Auto-redirect will happen via JavaScript
                 break;
         }
     }
@@ -103,7 +105,9 @@ $status_filter = isset($_GET['status']) ? $_GET['status'] : '';
 
 $query = "SELECT m.*, 
           (SELECT COUNT(*) FROM attendance a WHERE a.member_id = m.id AND a.date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)) as monthly_visits,
-          (SELECT end_date FROM subscriptions s WHERE s.member_id = m.id AND s.status = 'Active' ORDER BY end_date DESC LIMIT 1) as subscription_end
+          (SELECT end_date FROM subscriptions s WHERE s.member_id = m.id AND s.status = 'Active' ORDER BY end_date DESC LIMIT 1) as subscription_end,
+          (SELECT id FROM subscriptions s WHERE s.member_id = m.id AND s.status = 'Pending' LIMIT 1) as pending_subscription_id,
+          (SELECT p.price FROM subscriptions s JOIN membership_plans p ON s.plan_id = p.id WHERE s.member_id = m.id AND s.status = 'Pending' LIMIT 1) as pending_amount
           FROM members m WHERE 1=1";
 
 if ($search) {
@@ -347,7 +351,10 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <small><?php echo $member['phone']; ?></small>
                                 </td>
                                 <td>
-                                    <?php if ($member['subscription_end']): ?>
+                                    <?php if ($member['pending_subscription_id']): ?>
+                                        <span class="badge bg-warning">Pending (Unpaid)</span><br>
+                                        <small>Amount: ₹<?php echo htmlspecialchars($member['pending_amount']); ?></small>
+                                    <?php elseif ($member['subscription_end']): ?>
                                         <?php 
                                         $end_date = strtotime($member['subscription_end']);
                                         $today = strtotime(date('Y-m-d'));
@@ -390,9 +397,15 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <button class="btn btn-sm btn-outline-info" onclick="updateStatus(<?php echo $member['id']; ?>)" data-bs-toggle="tooltip" title="Update Member Status">
                                         <i class="fas fa-toggle-on"></i>
                                     </button>
+                                    <?php if ($member['pending_subscription_id']): ?>
+                                    <a href="payments.php?member_id=<?php echo $member['id']; ?>&subscription_id=<?php echo $member['pending_subscription_id']; ?>" class="btn btn-sm btn-outline-success" data-bs-toggle="tooltip" title="Pay Now - Process Pending Payment">
+                                        <i class="fas fa-credit-card"></i>
+                                    </a>
+                                    <?php else: ?>
                                     <button class="btn btn-sm btn-outline-success" onclick="managePlans(<?php echo $member['id']; ?>)" data-bs-toggle="tooltip" title="Manage Member Subscription">
                                         <i class="fas fa-id-card"></i>
                                     </button>
+                                    <?php endif; ?>
                                     <button class="btn btn-sm btn-outline-danger" onclick="deleteMember(<?php echo $member['id']; ?>)" data-bs-toggle="tooltip" title="Delete Member">
                                         <i class="fas fa-trash"></i>
                                     </button>
@@ -582,18 +595,18 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <h5 class="modal-title"><i class="fas fa-id-card me-2"></i>Manage Subscription</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form method="POST">
+                <form method="POST" id="subscriptionForm">
                     <input type="hidden" name="action" value="subscribe">
                     <input type="hidden" name="member_id" id="subscription_member_id">
                     <div class="modal-body">
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <label class="form-label">Select Plan *</label>
-                                <select class="form-select" name="plan_id" required>
+                                <select class="form-select" name="plan_id" id="planSelect" required onchange="updatePlanDetails()">
                                     <option value="">Choose a plan</option>
                                     <?php foreach ($plans as $plan): ?>
-                                        <option value="<?php echo $plan['id']; ?>" data-duration="<?php echo $plan['duration_days']; ?>">
-                                            <?php echo $plan['plan_name']; ?> (<?php echo $plan['duration_days']; ?> days)
+                                        <option value="<?php echo $plan['id']; ?>" data-price="<?php echo $plan['price']; ?>" data-duration="<?php echo $plan['duration_days']; ?>">
+                                            <?php echo $plan['plan_name']; ?> (<?php echo $plan['duration_days']; ?> days - ₹<?php echo number_format($plan['price'], 2); ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -602,11 +615,16 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <label class="form-label">Start Date *</label>
                                 <input type="date" class="form-control" name="start_date" value="<?php echo date('Y-m-d'); ?>" required>
                             </div>
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <strong>Amount to Pay:</strong> <span id="planPrice" style="font-size: 18px; font-weight: bold; color: #28a745;">-</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="createSubButton">
                             <i class="fas fa-save me-2"></i>Create Subscription
                         </button>
                     </div>
@@ -674,13 +692,57 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
             modal.show();
         }
 
-        function updateAmount() {
-            const planSelect = document.getElementById('plan_select');
-            const amountInput = document.getElementById('amount');
+        function updatePlanDetails() {
+            const planSelect = document.getElementById('planSelect');
             const selectedOption = planSelect.options[planSelect.selectedIndex];
             const price = selectedOption.getAttribute('data-price');
-            amountInput.value = price || '';
+            const priceDisplay = document.getElementById('planPrice');
+            if (price) {
+                priceDisplay.textContent = '₹' + parseFloat(price).toFixed(2);
+            } else {
+                priceDisplay.textContent = '-';
+            }
         }
+
+        // Handle subscription form submission to redirect to payments
+        document.getElementById('subscriptionForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const memberId = document.getElementById('subscription_member_id').value;
+            const planId = document.getElementById('planSelect').value;
+            
+            // Submit the form via fetch to capture subscription ID
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(() => {
+                // Get the latest pending subscription ID for this member
+                fetch('get_pending_subscriptions.php?member_id=' + memberId)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.subscriptions && data.subscriptions.length > 0) {
+                            const latestSub = data.subscriptions[0];
+                            // Redirect to payments with member and subscription pre-filled
+                            window.location.href = 'payments.php?member_id=' + memberId + '&subscription_id=' + latestSub.id;
+                        } else {
+                            alert('Subscription created but could not redirect to payments. Please go to Payments manually.');
+                            window.location.reload();
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error:', err);
+                        alert('Subscription may have been created. Please check Payments page.');
+                        window.location.reload();
+                    });
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Error creating subscription. Please try again.');
+            });
+        });
     </script>
 </body>
 <!-- Include QR Code Library -->

@@ -21,9 +21,10 @@ $plans = $plansStmt->fetchAll(PDO::FETCH_KEY_PAIR); // id => plan_name
 
 // Build query
 $query = "SELECT s.id, s.member_id, s.plan_id, s.start_date, s.end_date, s.amount_paid, s.payment_method, s.status, s.created_at,
-                 m.first_name, m.last_name
+                 m.first_name, m.last_name, p.price AS plan_price
           FROM subscriptions s
           JOIN members m ON s.member_id = m.id
+          JOIN membership_plans p ON s.plan_id = p.id
           WHERE 1=1";
 $params = [];
 
@@ -184,9 +185,9 @@ $subscriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <label class="form-label">Status</label>
                         <select class="form-select" name="status">
                             <option value="">All Status</option>
-                            <option value="Active" <?= $status_filter=='Active'?'selected':'' ?>>Active</option>
+                            <option value="Pending" <?= $status_filter=='Pending'?'selected':'' ?>>Pending (Unpaid)</option>
+                            <option value="Active" <?= $status_filter=='Active'?'selected':'' ?>>Active (Paid)</option>
                             <option value="Expired" <?= $status_filter=='Expired'?'selected':'' ?>>Expired</option>
-                            <option value="Pending" <?= $status_filter=='Pending'?'selected':'' ?>>Pending</option>
                         </select>
                     </div>
                     <div class="col-md-4 d-flex align-items-end">
@@ -225,11 +226,23 @@ $subscriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <td><?= isset($plans[$sub['plan_id']]) ? htmlspecialchars($plans[$sub['plan_id']]) : 'N/A' ?></td>
                                     <td><?= date('M d, Y', strtotime($sub['start_date'])) ?></td>
                                     <td><?= date('M d, Y', strtotime($sub['end_date'])) ?></td>
-                                    <td>$<?= number_format($sub['amount_paid'],2) ?></td>
-                                    <td><?= htmlspecialchars($sub['payment_method']) ?></td>
                                     <td>
-                                        <span class="badge <?= $sub['status']=='Active'?'bg-success':($sub['status']=='Expired'?'bg-danger':'bg-secondary') ?>">
-                                            <?= $sub['status'] ?>
+                                        <?php if($sub['status']=='Pending'): ?>
+                                            ₹<?= number_format($sub['plan_price'],2) ?> <small class="text-muted">(Due)</small>
+                                        <?php else: ?>
+                                            ₹<?= number_format($sub['amount_paid'],2) ?>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <?php if($sub['status']=='Pending'): ?>
+                                            -
+                                        <?php else: ?>
+                                            <?= htmlspecialchars($sub['payment_method']) ?>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <span class="badge <?= $sub['status']=='Active'?'bg-success':($sub['status']=='Expired'?'bg-danger':'bg-warning') ?>" title="<?= $sub['status']=='Pending'?'Payment pending - Not yet activated':''; ?>">
+                                            <?= $sub['status']=='Pending'?'🟡 Pending (Unpaid)':($sub['status']=='Active'?'✓ Active':($sub['status']=='Expired'?'✗ Expired':$sub['status'])) ?>
                                         </span>
                                     </td>
                                     <td><?= date('M d, Y H:i', strtotime($sub['created_at'])) ?></td>
