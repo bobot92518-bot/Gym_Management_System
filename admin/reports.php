@@ -213,6 +213,7 @@ if ($export === 'csv') {
             <a class="nav-link" href="subscriptions.php"><i class="fas fa-id-card me-2"></i> Subscriptions</a>
             <a class="nav-link" href="payments.php"><i class="fas fa-dollar-sign me-2"></i> Payments</a>
             <a class="nav-link" href="plans.php"><i class="fas fa-list me-2"></i> Membership Plans</a>
+            <a class="nav-link" href="discounts.php"><i class="fas fa-tag me-2"></i> Discounts</a>
             <a class="nav-link active" href="reports.php"><i class="fas fa-chart-bar me-2"></i> Reports</a>
             <hr style="border-color: rgba(255,255,255,0.2);">
             <a class="nav-link" href="../logout.php"><i class="fas fa-sign-out-alt me-2"></i> Logout</a>

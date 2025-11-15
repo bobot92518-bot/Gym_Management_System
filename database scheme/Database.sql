@@ -68,12 +68,28 @@ CREATE TABLE IF NOT EXISTS attendance (
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE
 );
 
+-- Discounts Table
+CREATE TABLE IF NOT EXISTS discounts (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    discount_name VARCHAR(100) NOT NULL,
+    description TEXT,
+    discount_type ENUM('Percentage', 'Fixed Amount') DEFAULT 'Percentage',
+    discount_value DECIMAL(10,2) NOT NULL,
+    min_amount DECIMAL(10,2),
+    max_discount DECIMAL(10,2),
+    status ENUM('Active', 'Inactive') DEFAULT 'Active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Payments Table
 CREATE TABLE IF NOT EXISTS payments (
     id INT PRIMARY KEY AUTO_INCREMENT,
     member_id INT NOT NULL,
     subscription_id INT,
     amount DECIMAL(10,2) NOT NULL,
+    discount_id INT,
+    discount_amount DECIMAL(10,2) DEFAULT 0,
+    final_amount DECIMAL(10,2) NOT NULL,
     payment_date DATE NOT NULL,
     payment_method ENUM('Cash', 'Card', 'Online', 'Bank Transfer') DEFAULT 'Cash',
     description TEXT,
@@ -81,6 +97,7 @@ CREATE TABLE IF NOT EXISTS payments (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (member_id) REFERENCES members(id) ON DELETE CASCADE,
     FOREIGN KEY (subscription_id) REFERENCES subscriptions(id),
+    FOREIGN KEY (discount_id) REFERENCES discounts(id),
     FOREIGN KEY (created_by) REFERENCES users(id)
 );
 

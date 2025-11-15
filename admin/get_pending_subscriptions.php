@@ -27,7 +27,7 @@ try {
                 p.plan_name
         FROM subscriptions s
         JOIN membership_plans p ON s.plan_id = p.id
-        WHERE s.member_id = ? AND s.status = ''
+        WHERE s.member_id = ? AND s.status = 'pending'
         ORDER BY s.created_at DESC
     ");
     $stmt->execute([$member_id]);

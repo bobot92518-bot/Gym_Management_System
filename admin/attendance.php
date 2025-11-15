@@ -278,6 +278,9 @@ $avg_duration = $avg_duration ? gmdate("H:i", $avg_duration) : '00:00';
             <a class="nav-link" href="plans.php">
                 <i class="fas fa-list me-2"></i> Membership Plans
             </a>
+            <a class="nav-link" href="discounts.php">
+                <i class="fas fa-tag me-2"></i> Discounts
+            </a>
             <a class="nav-link" href="reports.php">
                 <i class="fas fa-chart-bar me-2"></i> Reports
             </a>
