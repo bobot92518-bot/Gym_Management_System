@@ -492,7 +492,7 @@ $members = $membersStmt->fetchAll(PDO::FETCH_ASSOC);
                         <tr>
                             <td><strong><?php echo $payment['id']; ?></strong></td>
                             <td><?php echo htmlspecialchars($payment['member_id'] ?? 'N/A'); ?></td>
-                            <td class="payment-amount">₹<?php echo number_format($payment['amount'], 2); ?></td>
+                            <td class="payment-amount">₱<?php echo number_format($payment['amount'], 2); ?></td>
                             <td><span class="payment-method"><?php echo htmlspecialchars($payment['payment_method']); ?></span></td>
                             <td><?php echo date('d-M H:i', strtotime($payment['payment_date'])); ?></td>
                             <td>
@@ -619,7 +619,7 @@ $members = $membersStmt->fetchAll(PDO::FETCH_ASSOC);
                     data.subscriptions.forEach(sub => {
                         const selected = (selectedSubscriptionId && sub.id == selectedSubscriptionId) ? 'selected' : '';
                         options += `<option value="${sub.id}" data-amount="${sub.amount_due}" ${selected}>
-                            Plan: ${sub.plan_name} | ₹${parseFloat(sub.amount_due).toFixed(2)} (Due: ${sub.end_date})
+                            Plan: ${sub.plan_name} | ₱${parseFloat(sub.amount_due).toFixed(2)} (Due: ${sub.end_date})
                         </option>`;
                     });
                     subscriptionSelect.innerHTML = options;

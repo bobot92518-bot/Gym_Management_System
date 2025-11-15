@@ -228,9 +228,9 @@ $subscriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <td><?= date('M d, Y', strtotime($sub['end_date'])) ?></td>
                                     <td>
                                         <?php if($sub['status']=='Pending'): ?>
-                                            ₹<?= number_format($sub['plan_price'],2) ?> <small class="text-muted">(Due)</small>
+                                            ₱<?= number_format($sub['plan_price'],2) ?> <small class="text-muted">(Due)</small>
                                         <?php else: ?>
-                                            ₹<?= number_format($sub['amount_paid'],2) ?>
+                                            ₱<?= number_format($sub['amount_paid'],2) ?>
                                         <?php endif; ?>
                                     </td>
                                     <td>

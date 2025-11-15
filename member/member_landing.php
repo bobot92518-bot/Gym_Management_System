@@ -6,6 +6,14 @@ session_start();
 $db = new Database();
 $conn = $db->connect();
 
+// Handle logout
+if (isset($_GET['logout'])) {
+    session_unset();
+    session_destroy();
+    header("Location: member_landing.php");
+    exit;
+}
+
 $success = '';
 $error = '';
 
@@ -81,13 +89,22 @@ body { font-family:'Segoe UI', sans-serif; background:linear-gradient(135deg,var
                     <button type="button" id="scanBtn" class="btn btn-mode"><i class="fas fa-qrcode me-2"></i>Scan QR</button>
                 </div>
 
+                <!-- Manual Login Form -->
                 <form method="POST" id="manualForm">
                     <input type="text" class="form-control login-input" name="member_id" placeholder="Enter Member ID" required autofocus>
                     <button type="submit" name="login" class="btn btn-login mt-2"><i class="fas fa-sign-in-alt me-2"></i>LOGIN</button>
                 </form>
 
+                <!-- QR Scanner -->
                 <div id="qrReader"></div>
                 <div class="text-center mt-4"><small class="text-muted">Scan QR or enter ID manually</small></div>
+
+                <!-- Logout Button -->
+                <?php if (isset($_SESSION['member_id'])): ?>
+                    <div class="mt-4 text-center">
+                        <a href="?logout=1" class="btn btn-danger"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
@@ -100,6 +117,7 @@ const manualForm = document.getElementById('manualForm');
 const qrReader = document.getElementById('qrReader');
 let html5QrCode;
 
+// Switch between Manual and QR login
 manualBtn.addEventListener('click', () => {
     manualForm.style.display = 'block';
     qrReader.style.display = 'none';
@@ -119,15 +137,16 @@ scanBtn.addEventListener('click', () => {
         { facingMode: "environment" },
         { fps: 10, qrbox: 250 },
         (decodedText) => {
-            fetch('member_landing.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `login=1&member_id=${encodeURIComponent(decodedText)}`
-            }).then(res => res.text()).then(html => {
-                document.open();
-                document.write(html);
-                document.close();
-            });
+            // Submit a hidden form to handle QR login properly
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.style.display = 'none';
+            form.innerHTML = `
+                <input name="login" value="1">
+                <input name="member_id" value="${decodedText}">
+            `;
+            document.body.appendChild(form);
+            form.submit();
         }
     ).catch(err => console.error("Camera error:", err));
 });

@@ -353,7 +353,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td>
                                     <?php if ($member['pending_subscription_id']): ?>
                                         <span class="badge bg-warning">Pending (Unpaid)</span><br>
-                                        <small>Amount: ₹<?php echo htmlspecialchars($member['pending_amount']); ?></small>
+                                        <small>Amount: ₱<?php echo htmlspecialchars($member['pending_amount']); ?></small>
                                     <?php elseif ($member['subscription_end']): ?>
                                         <?php 
                                         $end_date = strtotime($member['subscription_end']);
@@ -606,7 +606,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <option value="">Choose a plan</option>
                                     <?php foreach ($plans as $plan): ?>
                                         <option value="<?php echo $plan['id']; ?>" data-price="<?php echo $plan['price']; ?>" data-duration="<?php echo $plan['duration_days']; ?>">
-                                            <?php echo $plan['plan_name']; ?> (<?php echo $plan['duration_days']; ?> days - ₹<?php echo number_format($plan['price'], 2); ?>)
+                                            <?php echo $plan['plan_name']; ?> (<?php echo $plan['duration_days']; ?> days - ₱<?php echo number_format($plan['price'], 2); ?>)
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
@@ -698,7 +698,7 @@ $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
             const price = selectedOption.getAttribute('data-price');
             const priceDisplay = document.getElementById('planPrice');
             if (price) {
-                priceDisplay.textContent = '₹' + parseFloat(price).toFixed(2);
+                priceDisplay.textContent = '₱' + parseFloat(price).toFixed(2);
             } else {
                 priceDisplay.textContent = '-';
             }

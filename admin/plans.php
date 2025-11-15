@@ -248,7 +248,7 @@ $plans = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <td><?php echo $plan['plan_name']; ?></td>
                                 <td><?php echo $plan['description']; ?></td>
                                 <td><?php echo $plan['duration_days']; ?></td>
-                                <td>$<?php echo $plan['price']; ?></td>
+                                <td>₱<?php echo $plan['price']; ?></td>
                                 <td><?php echo $plan['features']; ?></td>
                                 <td>
                                     <span class="badge <?php echo $plan['status']=='Active'?'bg-success':'bg-secondary'; ?>">
