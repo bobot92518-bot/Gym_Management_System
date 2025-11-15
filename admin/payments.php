@@ -1,9 +1,6 @@
 <?php
-<<<<<<< HEAD
 // payments.php - Payments POS
-=======
 // payments.php - POS Payment Management
->>>>>>> f053ba1fec3bdc4a8aa417645e4240758b1b15c9
 require_once '../config.php';
 require_once '../session.php';
 requireLogin();
@@ -11,7 +8,6 @@ requireLogin();
 $db = new Database();
 $conn = $db->connect();
 
-<<<<<<< HEAD
 // Handle AJAX request for unpaid plans
 if (isset($_GET['action']) && $_GET['action'] === 'get_unpaid_subscriptions' && isset($_GET['member_id'])) {
     $member_id = $_GET['member_id'];
@@ -67,7 +63,6 @@ $pendingQuery = "SELECT s.*, m.first_name, m.last_name, m.member_id as member_co
                  ORDER BY s.created_at DESC";
 $pendingStmt = $conn->query($pendingQuery);
 $pendingSubscriptions = $pendingStmt->fetchAll(PDO::FETCH_ASSOC);
-=======
 $message = '';
 $messageType = '';
 
@@ -143,7 +138,6 @@ if (isset($_GET['delete_id'])) {
         $messageType = "danger";
     }
 }
->>>>>>> f053ba1fec3bdc4a8aa417645e4240758b1b15c9
 
 // Fetch all payments
 $search = isset($_GET['search']) ? $_GET['search'] : '';
@@ -516,7 +510,6 @@ $members = $membersStmt->fetchAll(PDO::FETCH_ASSOC);
 <!-- Main Content -->
 <div class="main-content">
     <div class="d-flex justify-content-between align-items-center mb-4">
-<<<<<<< HEAD
         <h2><i class="fas fa-cash-register me-2"></i>Payments POS</h2>
         <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addPaymentModal">
             <i class="fas fa-plus me-2"></i>Process New Payment
@@ -594,7 +587,6 @@ $members = $membersStmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="col-md-2">
                     <a href="payments.php" class="btn btn-outline-secondary w-100"><i class="fas fa-redo me-2"></i>Reset</a>
                 </div>
-=======
         <h2><i class="fas fa-cash-register me-2"></i>Payment Management</h2>
     </div>
 
@@ -612,7 +604,6 @@ $members = $membersStmt->fetchAll(PDO::FETCH_ASSOC);
             <form method="GET" style="display: flex; gap: 10px; width: 100%;">
                 <input type="text" name="search" placeholder="Search by ID, member, method..." value="<?php echo htmlspecialchars($search); ?>">
                 <button type="submit"><i class="fas fa-search"></i></button>
->>>>>>> f053ba1fec3bdc4a8aa417645e4240758b1b15c9
             </form>
         </div>
 
@@ -806,7 +797,6 @@ $members = $membersStmt->fetchAll(PDO::FETCH_ASSOC);
 </div>
 </div>
 
-<<<<<<< HEAD
 <!-- Add Payment Modal -->
 <div class="modal fade" id="addPaymentModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
@@ -927,7 +917,5 @@ function processPendingPayment(subscriptionId, memberId, amount) {
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-=======
->>>>>>> f053ba1fec3bdc4a8aa417645e4240758b1b15c9
 </body>
 </html>
