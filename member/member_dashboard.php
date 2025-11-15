@@ -80,10 +80,15 @@ body{font-family:'Segoe UI', sans-serif;background:#f5f5f5;margin:0;padding:0;}
 <body>
 
 <div class="sidebar">
-    <div class="logo"><i class="fas fa-dumbbell"></i><h4>GYM Manager</h4></div>
+    <div class="logo">
+        <i class="fas fa-dumbbell"></i>
+        <h4>GYM Manager</h4>
+    </div>
     <a class="nav-link active" href="member_dashboard.php"><i class="fas fa-home me-2"></i>Dashboard</a>
+    <a class="nav-link" href="view_profile.php"><i class="fas fa-user me-2"></i>Edit Profile</a>
     <a class="nav-link" href="logout.php"><i class="fas fa-sign-out-alt me-2"></i>Logout</a>
 </div>
+
 
 <div class="main-content">
 <h2>Welcome, <?php echo $member['first_name'].' '.$member['last_name']; ?></h2>
