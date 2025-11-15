@@ -19,12 +19,14 @@ $members = $membersStmt->fetchAll(PDO::FETCH_ASSOC);
 $plansStmt = $conn->query("SELECT id, plan_name FROM membership_plans");
 $plans = $plansStmt->fetchAll(PDO::FETCH_KEY_PAIR); // id => plan_name
 
+// Fetch all subscriptions with member info
+
 // Build query
 $query = "SELECT s.id, s.member_id, s.plan_id, s.start_date, s.end_date, s.amount_paid, s.payment_method, s.status, s.created_at,
-                 m.first_name, m.last_name, p.price AS plan_price
-          FROM subscriptions s
-          JOIN members m ON s.member_id = m.id
-          JOIN membership_plans p ON s.plan_id = p.id
+       m.member_id AS mem_id, m.first_name, m.last_name, p.price AS plan_price
+FROM subscriptions s
+JOIN members m ON s.member_id = m.id
+JOIN membership_plans p ON s.plan_id = p.id
           WHERE 1=1";
 $params = [];
 
@@ -200,66 +202,67 @@ $subscriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
         </div>
 
-        <!-- Subscriptions Table -->
-        <div class="card">
-            <div class="card-header"><i class="fas fa-table me-2"></i>All Subscriptions (<?= count($subscriptions) ?>)</div>
-            <div class="card-body table-responsive">
-                <table class="table table-hover">
-                    <thead>
+       <!-- Subscriptions Table -->
+<div class="card">
+    <div class="card-header"><i class="fas fa-table me-2"></i>All Subscriptions (<?= count($subscriptions) ?>)</div>
+    <div class="card-body table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Member ID</th>
+                    <th>Member Name</th>
+                    <th>Plan</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Amount Paid</th>
+                    <th>Payment Method</th>
+                    <th>Status</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if(!empty($subscriptions)): ?>
+                    <?php foreach($subscriptions as $index => $sub): ?>
                         <tr>
-                            <th>#</th>
-                            <th>Member ID</th>
-                            <th>Member Name</th>
-                            <th>Plan</th>
-                            <th>Start Date</th>
-                            <th>End Date</th>
-                            <th>Amount Paid</th>
-                            <th>Payment Method</th>
-                            <th>Status</th>
-                            <th>Created At</th>
+                            <td><?= $index+1 ?></td>
+                            <td><?= htmlspecialchars($sub['mem_id']) ?></td>
+                            <td><?= htmlspecialchars($sub['first_name'] . ' ' . $sub['last_name']) ?></td>
+                            <td><?= isset($plans[$sub['plan_id']]) ? htmlspecialchars($plans[$sub['plan_id']]) : 'N/A' ?></td>
+                            <td><?= date('M d, Y', strtotime($sub['start_date'])) ?></td>
+                            <td><?= date('M d, Y', strtotime($sub['end_date'])) ?></td>
+                            <td>
+                                <?php if($sub['status']=='Pending'): ?>
+                                    ₱<?= number_format($sub['plan_price'],2) ?> <small class="text-muted">(Due)</small>
+                                <?php else: ?>
+                                    ₱<?= number_format($sub['amount_paid'],2) ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php if($sub['status']=='Pending'): ?>
+                                    -
+                                <?php else: ?>
+                                    <?= htmlspecialchars($sub['payment_method']) ?>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <span class="badge <?= $sub['status']=='Active'?'bg-success':($sub['status']=='Expired'?'bg-danger':'bg-warning') ?>" title="<?= $sub['status']=='Pending'?'Payment pending - Not yet activated':''; ?>">
+                                    <?= $sub['status']=='Pending'?'🟡 Pending (Unpaid)':($sub['status']=='Active'?'✓ Active':($sub['status']=='Expired'?'✗ Expired':$sub['status'])) ?>
+                                </span>
+                            </td>
+                            <td><?= date('M d, Y H:i', strtotime($sub['created_at'])) ?></td>
                         </tr>
-                    </thead>
-                    <tbody>
-                        <?php if(!empty($subscriptions)): ?>
-                            <?php foreach($subscriptions as $index => $sub): ?>
-                                <tr>
-                                    <td><?= $index+1 ?></td>
-                                    <td><?= htmlspecialchars($sub['member_id']) ?></td>
-                                    <td><?= htmlspecialchars($sub['first_name'] . ' ' . $sub['last_name']) ?></td>
-                                    <td><?= isset($plans[$sub['plan_id']]) ? htmlspecialchars($plans[$sub['plan_id']]) : 'N/A' ?></td>
-                                    <td><?= date('M d, Y', strtotime($sub['start_date'])) ?></td>
-                                    <td><?= date('M d, Y', strtotime($sub['end_date'])) ?></td>
-                                    <td>
-                                        <?php if($sub['status']=='Pending'): ?>
-                                            ₱<?= number_format($sub['plan_price'],2) ?> <small class="text-muted">(Due)</small>
-                                        <?php else: ?>
-                                            ₱<?= number_format($sub['amount_paid'],2) ?>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <?php if($sub['status']=='Pending'): ?>
-                                            -
-                                        <?php else: ?>
-                                            <?= htmlspecialchars($sub['payment_method']) ?>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <span class="badge <?= $sub['status']=='Active'?'bg-success':($sub['status']=='Expired'?'bg-danger':'bg-warning') ?>" title="<?= $sub['status']=='Pending'?'Payment pending - Not yet activated':''; ?>">
-                                            <?= $sub['status']=='Pending'?'🟡 Pending (Unpaid)':($sub['status']=='Active'?'✓ Active':($sub['status']=='Expired'?'✗ Expired':$sub['status'])) ?>
-                                        </span>
-                                    </td>
-                                    <td><?= date('M d, Y H:i', strtotime($sub['created_at'])) ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="10" class="text-center text-muted">No subscriptions found.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                    <?php endforeach; ?>
+                <?php else: ?>
+                    <tr>
+                        <td colspan="10" class="text-center text-muted">No subscriptions found.</td>
+                    </tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
+
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
